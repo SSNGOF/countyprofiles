@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>County Profiles</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Sheetsee -->
+    <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js'></script>
+    <script type='text/javascript' src='js/tabletop1.3.4.js'></script>
+    <script type='text/javascript' src='js/sheetsee.js'></script>
+    <script type="text/javascript" src='js/leaflet.markercluster.js'></script>
+    <link rel='stylesheet' type='text/css' href='http://api.tiles.mapbox.com/mapbox.js/v1.0.0/mapbox.css' />
+
+    <link rel="stylesheet" href="css/MarkerCluster.css" />
+    <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
+
+    <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.3/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.3/leaflet.fullscreen.css' rel='stylesheet' />
+
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.7/leaflet.css" />
+    <link rel="stylesheet" href="css/MarkerCluster.css" />
+    <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
+    <link rel="stylesheet" type="text/css" href="css/qgis2web.css">
+    <link rel="stylesheet" href="css/label.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.7/leaflet.js"></script>
+    <script src="js/leaflet-hash.js"></script>
+    <script src="js/label.js"></script>
+    <script src="js/Autolinker.min.js"></script>
+    <script src="js/leaflet.markercluster.js"></script>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+</head>
+
+<style>
+#map,
+#shapesmap {
+    max-width: 100%;
+    height: 700px;
+}
+.leaflet-popup-content li {
+    list-style: none;
+}
+.leaflet-popup-content {
+    width: 220px;
+}
+.leaflet-popup-content img {
+    width: 100px;
+}
+a {
+    border: none;
+}
+.navbar-inverse {
+    height: 60px;
+    background-color: #606;
+}
+</style>
+
+<body>
+
+    <!-- navbar start -->
+    <nav class="navbar navbar-inverse" role="navigation">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>s
+                <a class="navbar-brand" href="#" style="color:white;">South Sudan County Profile</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="color:white;">Other Dashboards <span class="caret"></span></a>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="http://southsudanngoforum.org/3w">INGO Operational Presence 3W</a>
+                            </li>
+                            <li><a href="http://southsudanngoforum.org/3w-nngo">NNGO Operational Presence 3W</a>
+                            </li>
+                            <li><a href="http://southsudanngoforum.org/contacts">INGO CD Contacts</a>
+                            </li>
+                            <li><a href="http://southsudanngoforum.org/contacts-nngo">NNGO CD Contacts</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+    <!-- navbar end  -->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-9">
+                
+ <div id="map"></div>
+        <script src="data/json_Counties.js"></script>
+        <script src="data/json_Complete.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:6.8, minZoom:6.8
+        })
+        var hash = new L.Hash(map);
+        var additional_attrib = '<a href="https://github.com/tomchadwin/qgis2web" target ="_blank">qgis2web</a>';
+        var feature_group = new L.featureGroup([]);
+        var bounds_group = new L.featureGroup([]);
+        var raster_group = new L.LayerGroup([]);
+        var layerOrder = new Array();
+        function stackLayers() {
+            for (index = 0; index < layerOrder.length; index++) {
+                map.removeLayer(layerOrder[index]);
+                map.addLayer(layerOrder[index]);
+            }
+            map.fitBounds(bounds_group.getBounds());
+        }
+        function restackLayers() {
+            for (index = 0; index < layerOrder.length; index++) {
+                layerOrder[index].bringToFront();
+            }
+        }
+        map.on('overlayadd', restackLayers);
+        layerControl = L.control.layers({},{},{collapsed:false});
+
+        function doStyleCounties(feature) {
+            switch (feature.properties.Profile) {
+                default:
+                    return {
+                    weight: '2.0',
+                    fillColor: '#beb8b8',
+                    color: '#ffffff',
+                    dashArray: '',
+                    opacity: '1.0',
+                    fillOpacity: '1.0',
+                };
+                break;
+
+            }
+        }
+            var json_CountiesJSON = new L.geoJson(json_Counties, {
+                style: doStyleCounties
+            });
+            layerOrder[layerOrder.length] = json_CountiesJSON;
+        bounds_group.addLayer(json_CountiesJSON);
+        function pop_Complete(feature, layer) {
+            var popupContent = '<table><tr><th scope="row">State</th><td>' + Autolinker.link(String(feature.properties['State'])) + '</td></tr><tr><th scope="row">County</th><td>' + Autolinker.link(String(feature.properties['County'])) + '</td></tr><tr><th scope="row">Area</th><td>' + Autolinker.link(String(feature.properties['Area'])) + '</td></tr><tr><th scope="row">Map</th><td>' + Autolinker.link(String(feature.properties['Map'])) + '</td></tr><tr><th scope="row">Profile</th><td>' + Autolinker.link(String(feature.properties['Profile'])) + '</td></tr></table>';
+            layer.bindPopup(popupContent);
+        }
+
+        function doStyleComplete(feature) {
+            switch (feature.properties.State) {
+                case 'Jonglei':
+                    return {
+                    weight: '2.0',
+                    fillColor: '#33a02c',
+                    color: '#ffffff',
+                    dashArray: '',
+                    opacity: '1.0',
+                    fillOpacity: '1.0',
+                };
+                break;
+
+                case 'Upper Nile':
+                    return {
+                    weight: '1.04',
+                    fillColor: '#cab2d6',
+                    color: '#ffffff',
+                    dashArray: '',
+                    opacity: '1.0',
+                    fillOpacity: '1.0',
+                };
+                break;
+
+            }
+        }
+            var json_CompleteJSON = new L.geoJson(json_Complete, {
+                onEachFeature: pop_Complete,
+                style: doStyleComplete
+            });
+            layerOrder[layerOrder.length] = json_CompleteJSON;
+        bounds_group.addLayer(json_CompleteJSON);
+        feature_group.addLayer(json_CompleteJSON);
+        raster_group.addTo(map);
+        feature_group.addTo(map);
+        stackLayers();
+    </script>
+
+            </div>
+            <div class="col-sm-3">
+                <img src="images/logo.png" class="img-responsive" alt="South Sudan NGO Forum">
+                <div>
+                    <p>Place disclamer/instructions here.</p>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
